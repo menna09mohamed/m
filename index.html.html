@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>متحف خلفاء محمد علي التفاعلي</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --beige:#f3ead9; --ivory:#fbf8f0; --gold:#c9a24b; --gold-l:#e8d49a; --grey:#dedad2; --grey-d:#8b8576;
+  --ink:#4b4232; --ok:#5f9b6b; --bad:#c2655a; --card:#fffdf7;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Cairo',Tahoma,sans-serif;color:var(--ink);
+  background:linear-gradient(180deg,var(--ivory),var(--beige));min-height:100vh;line-height:1.8}
+/* ---------- Map ---------- */
+#mapbar{position:sticky;top:0;z-index:20;background:rgba(251,248,240,.96);border-bottom:2px solid var(--gold-l);
+  padding:8px 12px;box-shadow:0 2px 10px rgba(120,100,50,.12)}
+#mapbar .t{display:flex;justify-content:space-between;font-size:.85rem;color:var(--grey-d);max-width:900px;margin:0 auto 4px}
+.track{display:flex;align-items:center;justify-content:center;max-width:900px;margin:auto;gap:0}
+.node{display:flex;flex-direction:column;align-items:center;min-width:92px;cursor:pointer;font-size:.78rem;text-align:center}
+.node .c{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-size:1.2rem;
+  background:var(--grey);border:3px solid var(--grey);transition:.4s}
+.node.done .c{background:var(--ok);border-color:var(--ok);color:#fff}
+.node.cur .c{background:var(--gold);border-color:#b48a2d;color:#fff;box-shadow:0 0 0 6px rgba(201,162,75,.28);animation:pulse 1.8s infinite}
+.node.lock{cursor:not-allowed;opacity:.75}
+.link{flex:1;height:4px;background:var(--grey);min-width:20px;border-radius:2px;position:relative;overflow:hidden}
+.link.fill::after{content:"";position:absolute;inset:0;background:var(--gold)}
+@keyframes pulse{50%{box-shadow:0 0 0 11px rgba(201,162,75,.08)}}
+/* ---------- Stage ---------- */
+#stage{max-width:960px;margin:0 auto;padding:18px 14px 60px}
+.enter{animation:enter 1.1s ease both}
+@keyframes enter{from{opacity:0;transform:scale(.88) translateY(30px);filter:blur(5px)}to{opacity:1;transform:none;filter:none}}
+.hall{background:linear-gradient(180deg,#fffdf8,#f6efdf);border:1px solid var(--gold-l);border-radius:18px;padding:22px;
+  box-shadow:0 8px 30px rgba(140,115,55,.15);position:relative}
+.hall::before{content:"";position:absolute;inset:8px;border:1px solid var(--gold-l);border-radius:12px;pointer-events:none}
+h1,h2,h3{font-family:'Amiri',serif;margin:.2em 0}
+h1{font-size:2.3rem;text-align:center;color:#7a5f1f}
+h2{font-size:1.8rem;color:#7a5f1f}
+.btn{font-family:inherit;font-size:1rem;font-weight:600;border:none;border-radius:30px;padding:10px 26px;cursor:pointer;
+  background:linear-gradient(180deg,#d8b45c,#b98f33);color:#fff;box-shadow:0 3px 8px rgba(150,115,40,.3);transition:.2s}
+.btn:hover:not(:disabled){transform:translateY(-2px)}
+.btn:disabled{background:var(--grey);color:var(--grey-d);box-shadow:none;cursor:not-allowed}
+.btn.alt{background:#fff;color:#8a6a22;border:2px solid var(--gold);box-shadow:none}
+.center{text-align:center}
+/* ---------- Room ---------- */
+.roomhead{display:grid;grid-template-columns:230px 1fr;gap:22px;align-items:center;margin-bottom:18px}
+@media(max-width:680px){.roomhead{grid-template-columns:1fr}}
+.frame{padding:14px;background:linear-gradient(135deg,#e8d49a,#b98f33,#f0e0ab,#b98f33);border-radius:6px;
+  box-shadow:0 8px 20px rgba(120,95,30,.35);width:210px;margin:auto}
+.frame .in{background:#f4ecda;border:6px solid #fbf6e8;aspect-ratio:3/4;display:grid;place-items:center;overflow:hidden;position:relative}
+.frame img{width:100%;height:100%;object-fit:cover;display:block}
+.ph{font-family:'Amiri';font-size:4.5rem;color:var(--gold)}
+.plaque{background:#fff;border:1px solid var(--gold);text-align:center;font-size:.85rem;margin-top:8px;padding:3px;border-radius:4px;font-family:'Amiri';font-weight:700}
+.upl{display:block;text-align:center;margin-top:6px;font-size:.75rem;color:var(--grey-d);cursor:pointer;text-decoration:underline}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;margin:16px 0}
+.art{background:var(--card);border:6px solid transparent;border-image:linear-gradient(135deg,#e8d49a,#b98f33,#f0e0ab) 1;
+  padding:14px;cursor:pointer;position:relative;transition:.25s;box-shadow:0 4px 12px rgba(120,100,50,.12)}
+.art:hover{transform:translateY(-4px) rotate(-.4deg);box-shadow:0 10px 22px rgba(120,100,50,.22)}
+.art .ic{font-size:2.2rem}
+.art h3{font-size:1.15rem;margin:.1em 0}
+.art p{font-size:.9rem;margin:.3em 0;color:#6a5f4a;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.tag{display:inline-block;font-size:.72rem;padding:1px 10px;border-radius:20px;color:#fff}
+.tag.a{background:var(--ok)} .tag.b{background:var(--bad)} .tag.n{background:#a38d56} .tag.c{background:#7f8fa6}
+.seen{position:absolute;top:8px;left:10px;color:var(--ok);font-weight:800;opacity:0}
+.art.vis .seen{opacity:1}
+.bar{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;margin-top:10px}
+/* ---------- Modal ---------- */
+#modal{position:fixed;inset:0;background:rgba(90,75,45,.55);display:none;place-items:center;z-index:50;padding:16px}
+#modal.on{display:grid}
+#modal .box{background:var(--ivory);max-width:600px;width:100%;border:8px solid var(--gold-l);border-radius:14px;padding:26px;
+  animation:enter .4s both;text-align:center;max-height:90vh;overflow:auto}
+#modal .ic{font-size:4rem}
+#modal p{font-size:1.15rem;text-align:right}
+/* ---------- Quiz ---------- */
+.dots{display:flex;gap:8px;justify-content:center;margin:8px 0}
+.dots i{width:30px;height:8px;border-radius:5px;background:var(--grey)}
+.dots i.ok{background:var(--ok)} .dots i.bad{background:var(--bad)} .dots i.cur{background:var(--gold)}
+.q{font-size:1.35rem;font-weight:700;margin:12px 0}
+.diff{font-size:.8rem;background:var(--beige);border:1px solid var(--gold-l);padding:2px 12px;border-radius:20px}
+.opt{display:block;width:100%;text-align:right;font-family:inherit;font-size:1.05rem;background:#fff;border:2px solid var(--grey);
+  border-radius:12px;padding:11px 16px;margin:8px 0;cursor:pointer;transition:.2s;color:var(--ink)}
+.opt:hover:not(:disabled){border-color:var(--gold);background:#fffaf0}
+.opt.right{background:#e3f2e6;border-color:var(--ok)} .opt.wrong{background:#f8e1de;border-color:var(--bad)}
+.fb{border-radius:12px;padding:12px 16px;margin-top:12px;animation:enter .5s both}
+.fb.ok{background:#e8f4ea;border:2px solid var(--ok)} .fb.bad{background:#fbece9;border:2px solid var(--bad)}
+.big{font-size:3.4rem;font-weight:800;color:#8a6a22;font-family:'Amiri'}
+.rows{max-width:520px;margin:12px auto}
+.row{display:grid;grid-template-columns:130px 1fr 50px;gap:10px;align-items:center;margin:6px 0;font-size:.95rem}
+.meter{height:14px;background:var(--grey);border-radius:8px;overflow:hidden}
+.meter b{display:block;height:100%;background:linear-gradient(90deg,#d8b45c,#b98f33)}
+input[type=text]{font-family:inherit;font-size:1.1rem;padding:10px 16px;border:2px solid var(--gold);border-radius:30px;min-width:260px;text-align:center;background:#fff}
+#certprev{max-width:100%;border:6px solid var(--gold-l);margin-top:14px;display:none;box-shadow:0 6px 18px rgba(0,0,0,.15)}
+/* ---------- Walking overlay ---------- */
+#walk{position:fixed;inset:0;z-index:90;background:linear-gradient(#f9f3e3,#e9dcc0);opacity:0;pointer-events:none;transition:opacity .6s;overflow:hidden;perspective:500px}
+#walk.on{opacity:1;pointer-events:all}
+#walk .floor{position:absolute;left:-50%;right:-50%;bottom:0;height:62%;transform-origin:bottom;transform:rotateX(68deg);
+  background:repeating-conic-gradient(#f4ecd8 0 25%,#d9cdb0 0 50%) 0 0/120px 120px;animation:floor 2.6s linear infinite}
+@keyframes floor{to{background-position:0 240px}}
+#walk .ceil{position:absolute;left:-50%;right:-50%;top:0;height:38%;transform-origin:top;transform:rotateX(-68deg);background:#efe5cd}
+#walk .col{position:absolute;bottom:22%;width:70px;height:60%;background:linear-gradient(90deg,#d9cfb7,#fffdf5,#d9cfb7);border-radius:6px;
+  border-top:10px solid var(--gold);opacity:0;animation:col 2.6s linear infinite}
+#walk .col.l{left:50%} #walk .col.r{right:50%}
+@keyframes col{0%{opacity:0;transform:translateX(0) scale(.1)}15%{opacity:1}100%{opacity:1;transform:translateX(var(--dx)) scale(3.2)}}
+#walk .col.l{--dx:-1500%} #walk .col.r{--dx:1500%}
+#walk .glow{position:absolute;left:50%;top:38%;width:160px;height:200px;transform:translate(-50%,-50%);
+  background:radial-gradient(#fffbe8,rgba(255,240,190,0) 70%);animation:glow 2.6s ease-in forwards}
+@keyframes glow{to{transform:translate(-50%,-50%) scale(14)}}
+#walk .msg{position:absolute;top:10%;width:100%;text-align:center;font-family:'Amiri';font-size:2rem;color:#7a5f1f;text-shadow:0 1px 0 #fff}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#6b5a35;color:#fff;padding:9px 22px;border-radius:30px;
+  z-index:99;opacity:0;transition:.4s;pointer-events:none;font-size:.95rem}
+#toast.on{opacity:1}
+#printArea{display:none}
+@media print{
+  body>*:not(#printArea){display:none!important}
+  #printArea{display:block}
+  #printArea img{width:100%}
+  @page{size:landscape;margin:0}
+}
+</style>
+</head>
+<body>
+
+<div id="mapbar">
+  <div class="t"><span id="mapinfo"></span><span>🏛️ خريطة المتحف</span></div>
+  <div class="track" id="track"></div>
+</div>
+<div id="stage"></div>
+<div id="modal"><div class="box" id="modalbox"></div></div>
+<div id="walk"><div class="ceil"></div><div class="floor"></div>
+  <div class="glow"></div>
+  <div class="msg" id="walkmsg"></div></div>
+<div id="toast"></div>
+<div id="printArea"></div>
+
+<script>
+/* =====================================================================
+   إعدادات الصور: ضع روابط صور الحكام هنا (روابط خارجية) أو اتركها فارغة
+   ثم ارفع الصورة من زر "تغيير الصورة" أسفل الإطار داخل كل غرفة.
+   ===================================================================== */
+const PORTRAIT_URLS = {
+  abbas: "",   // رابط صورة عباس حلمي باشا الأول
+  said:  "",   // رابط صورة محمد سعيد باشا
+  ismail:""    // رابط صورة الخديو إسماعيل
+};
+
+/* ======================== بيانات المتحف ======================== */
+const ROOMS = [
+{ id:"abbas", short:"عباس الأول", name:"عباس حلمي باشا الأول", years:"1848م – 1854م", initial:"ع",
+  intro:"مرحباً بك في الغرفة الأولى. تعرّف على عهد قصير اتسم بالجمود، لكنه شهد بدايات مهمة في المواصلات.",
+  ex:[
+   {ic:"👑",tag:"n",tg:"نبذة",t:"من هو عباس الأول؟",x:"هو عباس بن طوسون بن محمد علي. تولى حكم مصر خلفاً لعمه إبراهيم باشا، ولم تتجاوز مدة حكمه ست سنوات."},
+   {ic:"🛣️",tag:"a",tg:"إنجاز",t:"إصلاح الطريق البري",x:"أصلح الطريق البري بين القاهرة والسويس."},
+   {ic:"🚂",tag:"a",tg:"إنجاز",t:"بداية سكة حديد القاهرة – الإسكندرية",x:"بدأ في تنفيذ مشروع مد خط سكة حديد بين القاهرة والإسكندرية."},
+   {ic:"📡",tag:"a",tg:"إنجاز",t:"بداية الخطوط التلغرافية",x:"بدأ في مد الخطوط التلغرافية."},
+   {ic:"🎯",tag:"c",tg:"الهدف",t:"تسهيل حركة التجارة",x:"كانت تلك الإصلاحات تهدف إلى تسهيل حركة التجارة."},
+   {ic:"🚪",tag:"b",tg:"مأخذ",t:"إغلاق المدارس والمصانع",x:"اتسم حكمه بالرجعية والجمود، فأغلق معظم المدارس والمصانع التي أنشأها محمد علي."},
+   {ic:"🎓",tag:"b",tg:"مأخذ",t:"استدعاء البعثات العلمية",x:"استدعى البعثات العلمية من فرنسا، فتوقف إرسال الطلاب للتعلم في الخارج."},
+   {ic:"⚓",tag:"b",tg:"مأخذ",t:"إهمال الجيش والبحرية",x:"أهمل الجيش والبحرية اللذين بناهما محمد علي."}
+  ],
+  quiz:[
+   {d:"سهل",q:"كم كانت مدة حكم عباس حلمي باشا الأول تقريباً؟",o:["ست سنوات","عشرين سنة","ست عشرة سنة","أربعين سنة"],a:0,fb:"لم تتجاوز فترة حكمه ست سنوات (1848م – 1854م)."},
+   {d:"سهل",q:"أي طريق قام عباس الأول بإصلاحه؟",o:["الطريق البري بين القاهرة والسويس","الطريق بين الإسكندرية ورشيد","الطريق بين طنطا ودمياط","الطريق بين أسوان والأقصر"],a:0,fb:"أصلح الطريق البري بين القاهرة والسويس."},
+   {d:"متوسط",q:"بدأ عباس الأول في تنفيذ مشروع مد خط سكة حديد بين:",o:["القاهرة والسويس","القاهرة والإسكندرية","الإسكندرية ودمياط","القاهرة وأسوان"],a:1,fb:"بدأ مشروع سكة حديد القاهرة – الإسكندرية، وأكمله بعده محمد سعيد باشا."},
+   {d:"متوسط",q:"ما الهدف من الإصلاحات التي قام بها عباس الأول في المواصلات؟",o:["تقوية الجيش","نشر التعليم","تسهيل حركة التجارة","زيادة عدد البعثات"],a:2,fb:"كانت الإصلاحات تهدف إلى تسهيل حركة التجارة."},
+   {d:"صعب",q:"أي مما يلي لم يحدث في عهد عباس الأول؟",o:["إغلاق معظم المدارس والمصانع","استدعاء البعثات العلمية من فرنسا","إهمال الجيش والبحرية","إنشاء مجلس شورى النواب"],a:3,fb:"مجلس شورى النواب أنشأه الخديو إسماعيل عام 1866م. أما الثلاثة الأخرى فمن مساوئ عهد عباس الأول."}
+  ]},
+{ id:"said", short:"سعيد باشا", name:"محمد سعيد باشا", years:"1854م – 1863م", initial:"س",
+  intro:"الغرفة الثانية: عهد اهتم بالفلاحين والتجارة والجيش والآثار.",
+  ex:[
+   {ic:"👑",tag:"n",tg:"نبذة",t:"من هو سعيد باشا؟",x:"هو محمد سعيد بن محمد علي، تولى حكم مصر بعد وفاة عباس حلمي باشا الأول."},
+   {ic:"🌾",tag:"a",tg:"إنجاز",t:"اللائحة السعيدية",x:"أصدر اللائحة السعيدية التي أصبح الفلاح بموجبها مالكاً للأرض، وحراً في تصريف محاصيله الزراعية، وله حق توريثها لأبنائه."},
+   {ic:"💰",tag:"a",tg:"إنجاز",t:"تخفيف الأعباء عن الفلاحين",x:"خفض الضرائب وتجاوز عن المتأخر منها."},
+   {ic:"🚰",tag:"a",tg:"إنجاز",t:"تطهير ترعة المحمودية",x:"اهتم بتطهير ترعة المحمودية التي حُفرت في عهد محمد علي."},
+   {ic:"🚢",tag:"a",tg:"إنجاز",t:"شركات الملاحة",x:"أنشأ شركة لنقل المحاصيل والمسافرين عن طريق نهر النيل، وشركة لتسيير البواخر في البحرين المتوسط والأحمر."},
+   {ic:"🚂",tag:"a",tg:"إنجاز",t:"السكك الحديدية والتلغراف",x:"استكمل خط سكة حديد القاهرة – الإسكندرية الذي بدأه عباس الأول، وأنشأ خط القاهرة – السويس، ومد الخطوط التلغرافية بين الإسكندرية والقاهرة والسويس."},
+   {ic:"🎖️",tag:"a",tg:"إنجاز",t:"النهوض بالجيش",x:"بذل جهوداً كبيرة للنهوض بالجيش الذي ضعف في عهد عباس الأول. فقصّر مدة الخدمة العسكرية إلى عام واحد وجعلها إجبارية على جميع المصريين، وفتح باب الترقي أمام الضباط المصريين."},
+   {ic:"🏺",tag:"a",tg:"إنجاز",t:"الاهتمام بالآثار",x:"اهتم بالآثار المصرية، فجهز مخازن في بولاق لحفظها."},
+   {ic:"⚠️",tag:"b",tg:"ملاحظة نقدية",t:"امتياز قناة السويس",x:"منح فرديناند ديلسبس امتياز إنشاء قناة السويس عام 1854م لشركة تستغل القناة تسعاً وتسعين سنة، ويرى كثير من المؤرخين أن شروط الامتياز لم تكن في صالح مصر."}
+  ],
+  quiz:[
+   {d:"سهل",q:"محمد سعيد باشا هو ابن:",o:["إبراهيم باشا","عباس الأول","محمد علي","الخديو إسماعيل"],a:2,fb:"هو محمد سعيد بن محمد علي."},
+   {d:"سهل",q:"ماذا حقق الفلاح بموجب اللائحة السعيدية؟",o:["أصبح مالكاً للأرض وله حق توريثها","أُعفي من الخدمة العسكرية","أُلغيت الضرائب نهائياً","أصبح موظفاً حكومياً"],a:0,fb:"أصبح الفلاح مالكاً للأرض وحراً في تصريف محاصيله، وله حق توريثها لأبنائه."},
+   {d:"متوسط",q:"ما مدة الخدمة العسكرية التي حددها سعيد باشا؟",o:["عشر سنوات","خمس سنوات","عام واحد وإجبارية على جميع المصريين","مدى الحياة"],a:2,fb:"قصّر مدة الخدمة العسكرية إلى عام واحد وجعلها إجبارية على جميع المصريين."},
+   {d:"متوسط",q:"لماذا جهّز سعيد باشا مخازن في بولاق؟",o:["لتخزين الأسلحة","لتخزين القطن","لحفظ الآثار المصرية","لإقامة المدارس"],a:2,fb:"جُهزت مخازن بولاق لحفظ الآثار المصرية، وهذا دليل اهتمامه بالثقافة."},
+   {d:"صعب",q:"أي مما يلي لم يحدث في عهد سعيد باشا؟",o:["إنشاء خط سكة حديد القاهرة – السويس","مد الخطوط التلغرافية","فتح باب الترقي أمام الضباط المصريين","إنشاء دار الأوبرا"],a:3,fb:"دار الأوبرا أنشأها الخديو إسماعيل. أما الباقي فمن أعمال سعيد باشا."}
+  ]},
+{ id:"ismail", short:"الخديو إسماعيل", name:"الخديو إسماعيل", years:"1863م – 1879م", initial:"إ",
+  intro:"الغرفة الثالثة: من أكثر الفترات تقدماً وعمراناً، وانتهت بأزمة مالية وخلع الخديو.",
+  ex:[
+   {ic:"👑",tag:"n",tg:"نبذة",t:"من هو الخديو إسماعيل؟",x:"هو إسماعيل بن إبراهيم بن محمد علي، تولى حكم مصر بعد وفاة عمه محمد سعيد باشا. ويُعد عهده من أكثر الفترات تقدماً وعمراناً في تاريخ مصر الحديث."},
+   {ic:"🌱",tag:"a",tg:"إنجاز",t:"الزراعة والري",x:"زاد مساحة الأراضي الزراعية، وتوسع في زراعة القطن وقصب السكر، واهتم بمشروعات الري فحفر ترعتي الإبراهيمية والإسماعيلية."},
+   {ic:"🏭",tag:"a",tg:"إنجاز",t:"الصناعة والتجارة",x:"زاد مصانع السكر، وأعاد فتح مصانع محمد علي كالنسيج والجلود والطوب والزجاج، وأنشأ شركة للملاحة التجارية، وطوّر ميناءي الإسكندرية والسويس."},
+   {ic:"🚆",tag:"a",tg:"إنجاز",t:"السكك الحديدية والبريد",x:"أنشأ عدة خطوط للسكك الحديدية، ومد الخطوط التلغرافية بين محافظات مصر حتى السودان، وأنشأ مصلحة البريد المصرية بمكاتبها الفرعية."},
+   {ic:"🎓",tag:"a",tg:"إنجاز",t:"النهضة التعليمية",x:"ضاعف ميزانية التعليم، وأعاد فتح ديوان المدارس، وأنشأ مدارس جديدة منها المدرسة السنية للبنات، وأرسل البعثات العلمية إلى أوروبا."},
+   {ic:"🎭",tag:"a",tg:"إنجاز",t:"دار الأوبرا والمرصد والجمعية الجغرافية",x:"أنشأ دار الأوبرا، ومرصد العباسية الفلكي، والجمعية الجغرافية، وبدأ في إنشاء دار الآثار العربية عام 1869م."},
+   {ic:"🏛️",tag:"a",tg:"إنجاز",t:"النهضة العمرانية",x:"اهتم بتخطيط المدن وتجميلها، فأُعيد تخطيط أحياء بالقاهرة، وأنشئ حي عابدين، وبُنيت قصور عدة منها قصر عابدين وقصر القبة."},
+   {ic:"🏥",tag:"a",tg:"إنجاز",t:"النهضة الصحية",x:"أنشأ عدة مستشفيات في القاهرة والإسكندرية والأقاليم، وبذل جهوداً لمكافحة الأوبئة."},
+   {ic:"⚔️",tag:"a",tg:"إنجاز",t:"الجيش والبحرية",x:"أنشأ المدارس الحربية، وزوّد الجيش بالأسلحة الحديثة، واهتم بالأسطول فأنشأ سفناً حربية في ترسانات أوروبا، وجدد المدرسة البحرية بالإسكندرية."},
+   {ic:"🗳️",tag:"a",tg:"إنجاز",t:"مجلس شورى النواب 1866م",x:"أنشأ مجلس شورى النواب وكان دوره استشارياً، يناقش القوانين والضرائب دون حق الاعتراض. ومع ذلك زاد الوعي السياسي لدى المصريين وأتاح لهم التعبير عن مشكلاتهم."},
+   {ic:"💸",tag:"b",tg:"مأخذ",t:"أزمة الديون",x:"اقترض بكثرة من الدول الأوروبية، خاصة إنجلترا وفرنسا، لدفع تعويضات قناة السويس والإنفاق على القصور والحفلات كحفل افتتاح القناة، ولدفع الأموال للسلطان للحصول على لقب خديو ووراثة العرش في أبنائه. فارتفعت الفوائد وساءت الإدارة المالية، وباع نصيب مصر في أسهم القناة لإنجلترا."},
+   {ic:"🌐",tag:"b",tg:"مأخذ",t:"زيادة التدخل الأجنبي",x:"بعثة كيڤ عام 1875م، ثم صندوق الدين عام 1876م، ثم المراقبة الثنائية، ثم لجنة التحقيق العليا عام 1878م، ثم الوزارة المختلطة برئاسة نوبار باشا، وكلها زادت النفوذ الأجنبي في شؤون مصر."},
+   {ic:"✊",tag:"c",tg:"النهاية",t:"الحركة الوطنية وخلع الخديو",x:"في مارس 1879م وضع أعضاء الحركة الوطنية اللائحة الوطنية. وافق إسماعيل عليها وكلّف شريف باشا بتشكيل وزارة وطنية، وأصدر مرسوماً بتسوية الديون. فضغطت إنجلترا وفرنسا عليه ليتنازل، فرفض، فلجأتا إلى السلطان العثماني الذي أصدر مرسوماً بخلعه وتولية ابنه محمد توفيق."}
+  ],
+  quiz:[
+   {d:"سهل",q:"تولى الخديو إسماعيل حكم مصر بعد وفاة:",o:["أبيه إبراهيم باشا","عمه محمد سعيد باشا","جده محمد علي","أخيه توفيق"],a:1,fb:"تولى الحكم بعد وفاة عمه محمد سعيد باشا."},
+   {d:"سهل",q:"أي الترعتين حفرهما الخديو إسماعيل؟",o:["المحمودية والإسماعيلية","الإبراهيمية والإسماعيلية","المحمودية والإبراهيمية","السويس والمحمودية"],a:1,fb:"حفر ترعتي الإبراهيمية والإسماعيلية، والمحمودية سبقتاه."},
+   {d:"متوسط",q:"ما الجهة التي أنشأها إسماعيل عام 1866م وكان دورها استشارياً؟",o:["مجلس شورى النواب","صندوق الدين","الوزارة المختلطة","لجنة التحقيق العليا"],a:0,fb:"أنشأ مجلس شورى النواب عام 1866م، وكان له حق مناقشة القوانين والضرائب دون حق الاعتراض."},
+   {d:"متوسط",q:"ما الذي حصل عليه إسماعيل من السلطان العثماني مقابل دفع أموال كثيرة؟",o:["لقب خديو ووراثة العرش في أبنائه","قناة السويس","الاستقلال عن إنجلترا","بيع أسهم القناة"],a:0,fb:"دفع أموالاً للسلطان ليحصل على لقب خديو ووراثة العرش في أبنائه."},
+   {d:"صعب",q:"ما النتيجة التي أدت إليها ضغوط إنجلترا وفرنسا بعد انحياز الخديو للائحة الوطنية؟",o:["تعيين نوبار باشا رئيساً للوزراء","إنشاء صندوق الدين","صدور مرسوم عثماني بخلعه وتولية ابنه توفيق","افتتاح قناة السويس"],a:2,fb:"لجأت إنجلترا وفرنسا إلى السلطان العثماني فأصدر مرسوماً بخلع إسماعيل وتولية ابنه محمد توفيق. وكان ذلك تمهيداً للاحتلال البريطاني لمصر."}
+  ]}
+];
+const PASS = 0.8;
+
+/* ======================== الحالة ======================== */
+const S = {room:-1, unlocked:0, passed:[false,false,false], scores:[0,0,0], visited:[new Set(),new Set(),new Set()],
+           quiz:null, photos:{}, final:false, name:""};
+const $ = id => document.getElementById(id);
+const stage = $("stage");
+
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("on");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("on"),2600)}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function animate(){stage.classList.remove("enter");void stage.offsetWidth;stage.classList.add("enter")}
+
+/* ======================== الخريطة ======================== */
+function drawMap(){
+  let h="";
+  const nodes=[...ROOMS.map((r,i)=>({i,label:r.short,icon:i+1})),{i:3,label:"النتيجة والشهادة",icon:"🏆"}];
+  nodes.forEach((n,k)=>{
+    let st;
+    if(n.i<3){ st = S.passed[n.i] ? "done" : (S.room===n.i && !S.final ? "cur" : (n.i<=S.unlocked?"open":"lock")); }
+    else st = S.final ? "cur" : (S.passed[2] ? "open":"lock");
+    const sym = st==="done"?"✓":(st==="lock"?"🔒":n.icon);
+    h+=`<div class="node ${st}" onclick="goNode(${n.i})"><div class="c">${sym}</div>${n.label}</div>`;
+    if(k<3) h+=`<div class="link ${S.passed[k]?"fill":""}"></div>`;
+  });
+  $("track").innerHTML=h;
+  const left=S.room<0?3:(3-S.passed.filter(Boolean).length);
+  $("mapinfo").textContent = S.final ? "أنهيت جميع الغرف 🎉" : (S.room<0?"لم تبدأ الجولة بعد":`أنت الآن في الغرفة ${S.room+1} من 3 — المتبقي: ${left} ${left==1?"مرحلة":"مراحل"}`);
+}
+function goNode(i){
+  if(S.room<0){toast("ابدأ الجولة أولاً");return}
+  if(i===3){ if(S.passed[2]) showFinal(); else toast("🔒 أنهِ الغرف الثلاث أولاً"); return}
+  if(i>S.unlocked){toast("🔒 هذه الغرفة مغلقة. اجتز اختبار الغرفة السابقة أولاً");return}
+  stopSpeech(); showRoom(i);
+}
+
+/* ======================== الصوت ======================== */
+let voice=null;
+function pickVoice(){const v=speechSynthesis.getVoices();voice=v.find(x=>/^ar-EG/i.test(x.lang))||v.find(x=>/^ar/i.test(x.lang))||null}
+if("speechSynthesis" in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
+function stopSpeech(){if("speechSynthesis" in window)speechSynthesis.cancel();document.querySelectorAll(".speaking").forEach(b=>b.classList.remove("speaking"))}
+function speak(text,onend){
+  if(!("speechSynthesis" in window)){toast("المتصفح لا يدعم الشرح الصوتي");return}
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);u.lang=voice?voice.lang:"ar-SA";if(voice)u.voice=voice;u.rate=.88;u.pitch=1;
+  if(!voice)toast("لم يتم العثور على صوت عربي في جهازك، قد يكون النطق غير مثالي");
+  u.onend=()=>onend&&onend();speechSynthesis.speak(u);
+}
+function exText(e){return `${e.tg}: ${e.t}. ${e.x}`}
+function playOne(i){speak(exText(ROOMS[S.room].ex[i]))}
+function playAll(){
+  const r=ROOMS[S.room];let k=0;
+  const next=()=>{if(k<r.ex.length){const e=r.ex[k++];speak(exText(e),next)}};
+  speak(`${r.name}. ${r.years}. ${r.intro}`,next);
+}
+
+/* ======================== الشاشات ======================== */
+function showWelcome(){
+  S.room=-1;drawMap();
+  stage.innerHTML=`<div class="hall center">
+    <div style="font-size:4rem">🏛️</div>
+    <h1>متحف خلفاء محمد علي</h1>
+    <p style="font-size:1.15rem;max-width:620px;margin:8px auto">
+      ستتجول في ثلاث قاعات ملكية: <b>عباس حلمي الأول</b>، <b>محمد سعيد باشا</b>، و<b>الخديو إسماعيل</b>.
+      استعرض اللوحات واستمع للشرح الصوتي، ثم اجتز اختبار كل قاعة بنسبة <b>80%</b> فأكثر ليُفتح لك الباب التالي تلقائياً.</p>
+    <p style="color:var(--grey-d);font-size:.9rem">لكل سؤال محاولة واحدة فقط، وتظهر التغذية الراجعة فور الإجابة.</p>
+    <div class="bar"><button class="btn" onclick="enterFrom(0)">ابدأ الجولة ←</button></div></div>`;
+  animate();
+}
+function enterFrom(i){walk("ندخل الآن إلى "+ROOMS[i].name+" …",()=>showRoom(i))}
+
+function portraitHTML(i){
+  const r=ROOMS[i],url=S.photos[r.id]||PORTRAIT_URLS[r.id];
+  const inner=url?`<img src="${url}" alt="${r.name}" onerror="this.parentNode.innerHTML='<div class=ph>${r.initial}</div>'">`:`<div class="ph">${r.initial}</div>`;
+  return `<div><div class="frame"><div class="in">${inner}</div></div>
+    <div class="plaque" style="max-width:210px;margin-inline:auto">${r.name}</div>
+    <label class="upl">تغيير الصورة<input type="file" accept="image/*" hidden onchange="setPhoto(${i},this)"></label></div>`;
+}
+function setPhoto(i,inp){
+  const f=inp.files[0];if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    const im=new Image();
+    im.onload=()=>{
+      // تصغير الصورة ثم حفظها في المتصفح بشكل دائم
+      const k=Math.min(1,600/Math.max(im.width,im.height)),c=document.createElement("canvas");
+      c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);
+      c.getContext("2d").drawImage(im,0,0,c.width,c.height);
+      const data=c.toDataURL("image/jpeg",.88);
+      S.photos[ROOMS[i].id]=data;
+      try{localStorage.setItem("museum_photo_"+ROOMS[i].id,data);toast("تم حفظ الصورة بشكل دائم ✓")}catch(e){toast("تم عرض الصورة لكن تعذر حفظها")}
+      showRoom(i,true);
+    };
+    im.src=rd.result;
+  };
+  rd.readAsDataURL(f);
+}
+// استرجاع الصور المحفوظة سابقاً
+ROOMS.forEach(r=>{try{const d=localStorage.getItem("museum_photo_"+r.id);if(d)S.photos[r.id]=d}catch(e){}});
+
+function showRoom(i,noAnim){
+  stopSpeech();S.room=i;S.final=false;S.quiz=null;
+  const r=ROOMS[i],seen=S.visited[i],all=seen.size>=r.ex.length;
+  drawMap();
+  const cards=r.ex.map((e,k)=>`<div class="art ${seen.has(k)?"vis":""}" onclick="openEx(${k})">
+      <span class="seen">✓ شوهدت</span><div class="ic">${e.ic}</div>
+      <span class="tag ${e.tag}">${e.tg}</span><h3>${e.t}</h3><p>${e.x}</p></div>`).join("");
+  let action;
+  if(S.passed[i]){
+    action=`<div class="center" style="color:var(--ok);font-weight:700">✓ اجتزت اختبار هذه الغرفة (${S.scores[i]}/5)</div>
+      <div class="bar">${i<2?`<button class="btn" onclick="enterFrom(${i+1})">إلى الغرفة التالية ←</button>`:`<button class="btn" onclick="showFinal()">لوحة النتيجة ←</button>`}</div>`;
+  } else {
+    action=`<div class="bar"><button class="btn" id="qbtn" ${all?"":"disabled"} onclick="startQuiz(${i})">📝 ابدأ اختبار الغرفة</button></div>
+      <div class="center" id="qhint" style="font-size:.85rem;color:var(--grey-d)">${all?"أحسنت! أصبح الاختبار متاحاً.":`افتح جميع اللوحات لتفعيل الاختبار (${seen.size}/${r.ex.length})`}</div>`;
+  }
+  stage.innerHTML=`<div class="hall">
+    <div class="roomhead">${portraitHTML(i)}
+      <div><span class="diff">الغرفة ${i+1} من 3</span><h2>${r.name}</h2>
+      <div style="font-weight:700;color:var(--grey-d)">فترة الحكم: ${r.years}</div>
+      <p>${r.intro}</p>
+      <button class="btn alt" onclick="playAll()">🔊 جولة صوتية للغرفة كاملة</button>
+      <button class="btn alt" onclick="stopSpeech()">⏹ إيقاف</button></div></div>
+    <h3>🖼️ معروضات الغرفة <small style="font-size:.8rem;color:var(--grey-d)">(اضغط على اللوحة للتكبير والاستماع)</small></h3>
+    <div class="gallery">${cards}</div>${action}</div>`;
+  if(!noAnim)animate();
+}
+
+function openEx(k){
+  const i=S.room,e=ROOMS[i].ex[k];S.visited[i].add(k);
+  $("modalbox").innerHTML=`<div class="ic">${e.ic}</div><span class="tag ${e.tag}">${e.tg}</span><h2>${e.t}</h2>
+    <p>${e.x}</p>
+    <div class="bar"><button class="btn" onclick="playOne(${k})">🔊 استمع للشرح</button>
+    <button class="btn alt" onclick="closeModal()">إغلاق</button></div>`;
+  $("modal").classList.add("on");
+}
+function closeModal(){
+  stopSpeech();$("modal").classList.remove("on");
+  if(S.room>=0&&!S.quiz&&!S.final)showRoom(S.room,true);
+}
+$("modal").addEventListener("click",e=>{if(e.target.id==="modal")closeModal()});
+
+/* ======================== الاختبار ======================== */
+function startQuiz(i){
+  stopSpeech();
+  S.quiz={room:i,idx:0,res:[],score:0,locked:false,
+    qs:ROOMS[i].quiz.map(q=>{const idx=shuffle([0,1,2,3]);return {...q,o:idx.map(j=>q.o[j]),a:idx.indexOf(q.a)}})};
+  renderQ();animate();
+}
+function renderQ(){
+  const Q=S.quiz,q=Q.qs[Q.idx],r=ROOMS[Q.room];
+  const dots=Q.qs.map((_,k)=>`<i class="${Q.res[k]===undefined?(k===Q.idx?"cur":""):(Q.res[k]?"ok":"bad")}"></i>`).join("");
+  stage.innerHTML=`<div class="hall"><div class="center"><span class="diff">اختبار ${r.name}</span></div>
+    <div class="dots">${dots}</div>
+    <div class="center"><span class="diff">السؤال ${Q.idx+1} من 5 — ${q.d}</span></div>
+    <div class="q">${q.q}</div>
+    <div id="opts">${q.o.map((o,k)=>`<button class="opt" onclick="answer(${k})"><b>${"أبجد"[k]}.</b> ${o}</button>`).join("")}</div>
+    <div id="fbbox"></div></div>`;
+  Q.locked=false;
+}
+function answer(k){
+  const Q=S.quiz;if(Q.locked)return;Q.locked=true;
+  const q=Q.qs[Q.idx],ok=k===q.a;Q.res[Q.idx]=ok;if(ok)Q.score++;
+  const bs=document.querySelectorAll(".opt");
+  bs.forEach((b,j)=>{b.disabled=true;if(j===q.a)b.classList.add("right");if(j===k&&!ok)b.classList.add("wrong")});
+  const last=Q.idx===4;
+  $("fbbox").innerHTML=`<div class="fb ${ok?"ok":"bad"}">${ok?`<b>✅ إجابة صحيحة! أحسنت.</b><br>${q.fb}`:
+    `<b>💡 تغذية راجعة:</b> إجابتك غير صحيحة ولن تُحتسب درجة هذا السؤال.<br><b>الإجابة الصحيحة:</b> ${q.o[q.a]}<br><b>السبب:</b> ${q.fb}`}</div>
+    <div class="bar"><button class="btn" onclick="${last?"finishQuiz()":"nextQ()"}">${last?"عرض نتيجة الغرفة":"السؤال التالي ←"}</button></div>`;
+  document.querySelectorAll(".dots i")[Q.idx].className=ok?"ok":"bad";
+}
+function nextQ(){S.quiz.idx++;renderQ()}
+function finishQuiz(){
+  const Q=S.quiz,i=Q.room,pct=Q.score/5,pass=pct>=PASS;
+  if(pass){S.passed[i]=true;S.scores[i]=Q.score;S.unlocked=Math.max(S.unlocked,Math.min(i+1,2));}
+  drawMap();
+  stage.innerHTML=`<div class="hall center"><div style="font-size:3rem">${pass?"🎉":"📚"}</div>
+    <div class="big">${Math.round(pct*100)}%</div><div>أجبت عن ${Q.score} من 5 أسئلة بشكل صحيح</div>
+    ${pass?`<h2>اجتزت الاختبار!</h2><p>${i<2?"سيفتح الباب التالي وتنتقل تلقائياً إلى الغرفة التالية …":"أنهيت آخر غرفة! جارٍ فتح لوحة النتيجة …"}</p>`
+    :`<h2>لم تصل إلى 80%</h2><p>تحتاج 4 إجابات صحيحة على الأقل لفتح الغرفة التالية. راجع المعروضات ثم أعد الاختبار.</p>
+      <div class="bar"><button class="btn" onclick="showRoom(${i})">راجع المعروضات</button>
+      <button class="btn alt" onclick="startQuiz(${i})">أعد الاختبار</button></div>`}</div>`;
+  animate();
+  if(pass){S.quiz=null;setTimeout(()=>{ if(i<2) walk("الباب يُفتح … نتجه إلى "+ROOMS[i+1].name,()=>showRoom(i+1)); else walk("نتجه إلى قاعة التكريم …",()=>showFinal()); },2200);}
+  else S.quiz=null;
+}
+
+/* ======================== النتيجة والشهادة ======================== */
+function totals(){const c=S.scores.reduce((a,b)=>a+b,0);return {c,pct:Math.round(c/15*100)}}
+function showFinal(){
+  stopSpeech();S.final=true;S.room=3;drawMap();
+  const t=totals();
+  const msg=t.pct>=95?"مستوى ممتاز! أنت خبير في تاريخ خلفاء محمد علي.":t.pct>=85?"أداء رائع جداً!":"أداء جيد، تهانينا على اجتياز المتحف.";
+  stage.innerHTML=`<div class="hall center"><div style="font-size:3.2rem">🏆</div><h1>لوحة النتيجة المجمعة</h1>
+    <div class="big">${t.pct}%</div><div>${t.c} إجابة صحيحة من أصل 15 سؤالاً</div><p style="font-weight:700">${msg}</p>
+    <div class="rows">${ROOMS.map((r,i)=>`<div class="row"><span>${r.short}</span><div class="meter"><b style="width:${S.scores[i]/5*100}%"></b></div><span>${S.scores[i]}/5</span></div>`).join("")}</div>
+    <hr style="border:0;border-top:1px solid var(--gold-l);margin:20px 0">
+    <h2>🎓 شهادة التقدير</h2><p>اكتب اسمك لإصدار شهادة اجتياز المتحف التاريخي:</p>
+    <input type="text" id="nm" placeholder="الاسم الكامل" value="${S.name}" maxlength="50">
+    <div class="bar"><button class="btn" onclick="certPreview()">👁️ معاينة الشهادة</button>
+    <button class="btn" onclick="certDownload()">⬇️ تحميل الشهادة (PNG)</button>
+    <button class="btn alt" onclick="certPrint()">🖨️ طباعة الشهادة</button></div>
+    <canvas id="cv" width="1600" height="1130" style="display:none"></canvas>
+    <img id="certprev" alt="الشهادة">
+    <div class="bar"><button class="btn alt" onclick="restart()">↺ إعادة الجولة</button></div></div>`;
+  animate();
+}
+function restart(){if(confirm("هل تريد إعادة الجولة من البداية؟")){Object.assign(S,{room:-1,unlocked:0,passed:[false,false,false],scores:[0,0,0],visited:[new Set(),new Set(),new Set()],quiz:null,final:false});showWelcome()}}
+
+async function drawCert(name){
+  try{await document.fonts.load("700 40px Amiri");await document.fonts.load("600 30px Cairo")}catch(e){}
+  const cv=$("cv"),c=cv.getContext("2d"),W=cv.width,H=cv.height,t=totals();
+  c.direction="rtl";c.textAlign="center";c.textBaseline="middle";
+  let g=c.createLinearGradient(0,0,W,H);g.addColorStop(0,"#fffdf6");g.addColorStop(1,"#f3ead9");c.fillStyle=g;c.fillRect(0,0,W,H);
+  c.strokeStyle="#c9a24b";c.lineWidth=14;c.strokeRect(40,40,W-80,H-80);
+  c.lineWidth=3;c.strokeRect(68,68,W-136,H-136);
+  c.fillStyle="#c9a24b";[[68,68],[W-68,68],[68,H-68],[W-68,H-68]].forEach(p=>{c.beginPath();c.arc(p[0],p[1],14,0,7);c.fill()});
+  c.fillStyle="#7a5f1f";c.font="700 92px Amiri, serif";c.fillText("شهادة تقدير",W/2,200);
+  c.fillStyle="#c9a24b";c.fillRect(W/2-220,255,440,5);
+  c.fillStyle="#6a5f4a";c.font="600 40px Cairo, sans-serif";c.fillText("يُمنح هذه الشهادة تقديراً للطالب / الطالبة",W/2,350);
+  let fs=110;c.fillStyle="#4b4232";
+  do{c.font=`700 ${fs}px Amiri, serif`;fs-=4}while(c.measureText(name).width>W-300&&fs>40);
+  c.fillText(name,W/2,500);
+  c.fillStyle="#c9a24b";c.fillRect(W/2-420,570,840,3);
+  c.fillStyle="#6a5f4a";c.font="600 40px Cairo, sans-serif";
+  c.fillText("لاجتيازه جولة متحف «خلفاء محمد علي» التفاعلي بنجاح",W/2,670);
+  c.fillText("عباس حلمي الأول  •  محمد سعيد باشا  •  الخديو إسماعيل",W/2,745);
+  c.fillStyle="#7a5f1f";c.font="700 58px Amiri, serif";c.fillText(`النتيجة النهائية: ${t.pct}%  (${t.c} من 15)`,W/2,860);
+  const d=new Date().toLocaleDateString("ar-EG",{year:"numeric",month:"long",day:"numeric"});
+  c.fillStyle="#8b8576";c.font="400 34px Cairo, sans-serif";c.fillText("التاريخ: "+d,W/2,1000);
+  c.beginPath();c.arc(260,950,85,0,7);c.fillStyle="#c9a24b";c.fill();c.beginPath();c.arc(260,950,70,0,7);c.strokeStyle="#fff";c.lineWidth=4;c.stroke();
+  c.fillStyle="#fff";c.font="700 42px Amiri, serif";c.fillText("متحف",260,935);c.fillText("التاريخ",260,985);
+  return cv;
+}
+function getName(){const n=$("nm").value.trim();if(!n){toast("من فضلك اكتب اسمك أولاً");$("nm").focus();return null}S.name=n;return n}
+async function certPreview(){const n=getName();if(!n)return;const cv=await drawCert(n);const im=$("certprev");im.src=cv.toDataURL("image/png");im.style.display="inline-block";im.scrollIntoView({behavior:"smooth",block:"center"})}
+async function certDownload(){const n=getName();if(!n)return;const cv=await drawCert(n);
+  cv.toBlob(b=>{const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="شهادة-متحف-خلفاء-محمد-علي.png";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000)},"image/png")}
+async function certPrint(){const n=getName();if(!n)return;const cv=await drawCert(n);
+  const pa=$("printArea");pa.innerHTML=`<img alt="الشهادة" src="${cv.toDataURL("image/png")}">`;
+  const im=pa.firstChild;const go=()=>setTimeout(()=>window.print(),150);im.complete?go():(im.onload=go)}
+
+/* ======================== المشي داخل المتحف ======================== */
+function footsteps(){
+  try{const ac=new (window.AudioContext||window.webkitAudioContext)();
+    for(let k=0;k<6;k++){const o=ac.createOscillator(),g=ac.createGain(),t=ac.currentTime+k*.42;
+      o.type="sine";o.frequency.setValueAtTime(110,t);o.frequency.exponentialRampToValueAtTime(50,t+.12);
+      g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.25,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+.18);
+      o.connect(g).connect(ac.destination);o.start(t);o.stop(t+.2)}
+    setTimeout(()=>ac.close(),3000)}catch(e){}
+}
+function walk(msg,cb){
+  stopSpeech();$("modal").classList.remove("on");
+  const w=$("walk");w.querySelectorAll(".col").forEach(n=>n.remove());
+  for(let k=0;k<7;k++)["l","r"].forEach(s=>{const d=document.createElement("div");d.className="col "+s;d.style.animationDelay=(k*.37)+"s";w.insertBefore(d,w.querySelector(".glow"))});
+  $("walkmsg").textContent=msg;w.classList.add("on");footsteps();
+  setTimeout(()=>{cb();window.scrollTo(0,0);setTimeout(()=>w.classList.remove("on"),250)},2700);
+}
+
+showWelcome();
+</script>
+</body>
+</html>
